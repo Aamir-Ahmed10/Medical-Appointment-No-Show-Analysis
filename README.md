@@ -4,7 +4,10 @@ Analyzing **110,527 medical appointments** from public healthcare clinics in Bra
 
 Built entirely in **T-SQL (Microsoft SQL Server Management Studio)**, using CTEs, window functions, and a persistent view for downstream reporting.
 
-![Schema and query results in SSMS](images/schema_screenshot.png)
+<img width="300" height="250" alt="images" src="https://github.com/user-attachments/assets/3c570402-3ff9-429b-aa1e-8eea91375dc0" />
+<img width="300" height="200" alt="medical-and-healthcare-concept-illustration-schedule-medical-check-up-flat-design-with-doctor-can-use-for-the-homepage-mobile-apps-character-cartoon-illustration-flat-style-free-vector" src="https://github.com/user-attachments/assets/c8468c61-d9ec-4331-b540-ff12a8dd0de2" />
+<img width="300" height="200" alt="image_8db79c5cdbe10f2bc951566ca2e250c9" src="https://github.com/user-attachments/assets/736707dc-5b76-4054-891d-38b4f4c2d628" />
+
 
 ---
 
@@ -143,8 +146,7 @@ Put together, these findings suggest a clinic could meaningfully cut no-shows wi
 ```
 ├── README.md                          # You are here
 ├── medical_appointment_analysis.sql   # Full cleaning + exploration + view-building script
-└── images/
-    └── schema_screenshot.png          # SSMS schema & query output screenshot
+
 ```
 
 ## 🚀 How to Reproduce
