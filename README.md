@@ -138,7 +138,8 @@ The model cleanly separates risk: patients flagged **High Risk** no-show at near
 
 To make the analysis usable by people who don't want to run SQL themselves, I built an interactive Tableau dashboard (`Medical_Appointment_No_Show_Dashboard.twbx`) on top of the same cleaned data and risk model.
 
-<img width="300" height="200" alt="Screenshot of Dashboard" src="https://github.com/user-attachments/assets/4491f98a-e75b-4aa5-838b-8d0f5a492b0f" />
+<img width="300" height="200" alt="Dashboard Screenshot" src="https://github.com/user-attachments/assets/75919947-bcf7-4386-a530-585b0e8d80ed" />
+
 
 
 **Data sources** — the workbook blends two extracts:
