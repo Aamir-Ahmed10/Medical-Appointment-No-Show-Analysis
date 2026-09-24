@@ -2,10 +2,11 @@
 
 Analyzing **110,527 medical appointments** from public healthcare clinics in Brazil to understand *why patients miss appointments* — and to build a simple, queryable risk model that flags high-risk appointments before they happen.
 
-Built entirely in **T-SQL (Microsoft SQL Server Management Studio)**, using CTEs, window functions, and a persistent view for downstream reporting.
+Built entirely in **T-SQL (Microsoft SQL Server Management Studio)**, using CTEs, window functions, and a persistent view for downstream reporting — then visualized in an interactive **Tableau** dashboard so the findings are usable by non-SQL stakeholders too.
 
-<img width="300" height="250" alt="images" src="https://github.com/user-attachments/assets/3c570402-3ff9-429b-aa1e-8eea91375dc0" />
-<img width="350" height="250" alt="image_8db79c5cdbe10f2bc951566ca2e250c9" src="https://github.com/user-attachments/assets/736707dc-5b76-4054-891d-38b4f4c2d628" />
+<img width="300" height="250" alt="images" src="https://github.com/user-attachments/assets/46968523-f99d-4757-a071-794ca8e717fa" />
+<img width="350" height="250" alt="image_8db79c5cdbe10f2bc951566ca2e250c9" src="https://github.com/user-attachments/assets/668e0b87-b03e-463f-8817-ef208a3b12b8" />
+
 
 
 ---
@@ -26,6 +27,7 @@ The project covers the full analytics workflow: importing raw data into SQL Serv
 |---|---|
 | **Microsoft SQL Server (SSMS)** | Database engine + query editor for the entire analysis |
 | **T-SQL** | All data cleaning, exploration, and modeling logic |
+| **Tableau (Desktop)** | Interactive dashboard visualizing the SQL findings and risk model |
 | **Kaggle Medical Appointment No-Show Dataset** | Source data (110,527 rows, 14 columns) |
 
 ---
@@ -42,6 +44,8 @@ Each row is one scheduled medical appointment, with fields covering:
 - **Health/social flags**: `Scholarship` (welfare program enrollment), `Hipertension`, `Diabetes`, `Alcoholism`, `Handcap`
 - **Reminders**: `SMS_received`
 - **Target**: `No-show` (`Yes` = patient missed the appointment, `No` = patient showed up)
+
+**Time period covered**: appointments run from **April 29, 2016 to June 8, 2016** (the vast majority — 80,836 of 110,521 — fall in May 2016, which is also why the original Kaggle file is named `KaggleV2-May-2016.csv`). Booking dates (`ScheduledDay`) go back as far as November 10, 2015, since some appointments were scheduled months in advance.
 
 ---
 
@@ -130,6 +134,38 @@ The model cleanly separates risk: patients flagged **High Risk** no-show at near
 
 ---
 
+## 📈 Interactive Dashboard (Tableau)
+
+To make the analysis usable by people who don't want to run SQL themselves, I built an interactive Tableau dashboard (`Medical_Appointment_No_Show_Dashboard.twbx`) on top of the same cleaned data and risk model.
+
+<img width="300" height="200" alt="Screenshot of Dashboard" src="https://github.com/user-attachments/assets/4491f98a-e75b-4aa5-838b-8d0f5a492b0f" />
+
+
+**Data sources** — the workbook blends two extracts:
+- `Medical Appointment.csv` — the cleaned, analysis-ready appointment table (post-SQL-cleaning)
+- `Appointment Risk.csv` — a CSV export of the `v_appointment_risk` SQL view (`PatientId`, `AppointmentID`, `Neighbourhood`, `lead_time_days`, `prior_appointments`, `prior_no_shows`, `prior_no_show_rate`, `risk_tier`)
+
+joined on `AppointmentID`/`PatientId`, so Tableau can visualize the window-function-based risk score directly, without re-deriving that logic in Tableau's own calculation engine.
+
+**Calculated fields built in Tableau**:
+- `No-Show Rate` → `COUNT(IF [No_show] = 1 THEN [AppointmentID] END) / COUNT([AppointmentID])`
+- `Lead Time Bucket` → a finer, 5-bucket version of the SQL lead-time grouping (`Same Day`, `1–7 Days`, `8–14 Days`, `15–30 Days`, `30+ Days`) built for more granular visual comparison than the four SQL buckets.
+
+**Dashboard layout** — nine worksheets (`Total_Appointments`, `No_Show_Rate`, `Avg_Lead_Time`, `No-Show Rate by Day`, `No-Show Rate by Lead Time`, `Top 15 Highest Rank Neighborhood`, `Risk Tier Breakdown`, `High Risk Patient Filter`, `Sheet 9`) combined into a single dashboard:
+
+- **KPI summary cards** — Total Appointments (110,521), No-Show Rate (20.19%), Avg Lead Time (10.2 days)
+- **No-Show Rate by Day** — bar chart across the week, matching the SQL day-of-week finding
+- **No-Show Rate by Lead Time** — bar chart across the five buckets, visually confirming "longer lead time → more no-shows"
+- **Risk Tier Breakdown** — a 100%-stacked bar showing the share of appointments in each tier: New Patient – Monitor (56.37%), Low Risk (18.98%), High Risk (17.53%), Medium Risk (the remainder, ~7%)
+- **Top 15 Highest-Risk Neighborhoods** — horizontal bar chart ranked by no-show rate, topped by Santos Dumont, consistent with the SQL findings above
+- **High Risk Patient Filter** — a live, filterable table of individual appointments flagged `High Risk`, paired with a **Risk Tier quick filter** so a viewer can toggle between All / High / Medium / Low / New Patient on the fly
+
+Because the dashboard sits directly on top of `v_appointment_risk`, re-running the SQL view and re-exporting the CSV refreshes the whole dashboard — no logic needs to be rebuilt in Tableau.
+
+> **Note:** the risk-tier percentages shown in Tableau (e.g. 17.53% High Risk) differ slightly from the SQL-derived figures earlier in this README (20.1% High Risk). Both come from the same `v_appointment_risk` logic — the small gap is most likely tie-breaking on the `ORDER BY AppointmentDay` in the SQL window function when a patient has multiple appointments on the same date, since there's no secondary sort key. Worth mentioning if asked, and an easy fix (add `AppointmentID` as a tiebreaker in the `ORDER BY`).
+
+---
+
 ## 💡 How This Is Useful
 
 Put together, these findings suggest a clinic could meaningfully cut no-shows without any new technology, just by:
@@ -138,13 +174,6 @@ Put together, these findings suggest a clinic could meaningfully cut no-shows wi
 - **Layering in patient history**: a returning patient with a poor attendance record is a stronger risk signal than the appointment's day of week or the patient's demographics alone — the `v_appointment_risk` view operationalizes this directly.
 - **Investigating the SMS/lead-time confound further** before concluding reminders don't work — a fairer test would compare SMS vs. no-SMS *within* the same lead-time bucket.
 
----
-
-## 📁 Repository Contents
-
-```
-├── README.md                          # You are here
-├── medical_appointment_analysis.sql   # Full cleaning + exploration + view-building script
 
 ```
 
@@ -156,6 +185,7 @@ Put together, these findings suggest a clinic could meaningfully cut no-shows wi
    ```sql
    SELECT * FROM v_appointment_risk WHERE risk_tier = 'High Risk';
    ```
+4. To explore the dashboard, open `Medical_Appointment_No_Show_Dashboard.twbx` in [Tableau Desktop](https://www.tableau.com/products/desktop) (or [Tableau Public](https://public.tableau.com/) if you don't have a license) — the extracts are packaged inside the file, so no database connection is required to view it.
 
 ---
 
